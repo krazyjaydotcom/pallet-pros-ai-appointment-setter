@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { updatePlayground } from "@/src/lib/mock-store";
 
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
+
 const simulateSchema = z.object({
   prospectMessage: z.string().min(1),
   leadStage: z.string().min(1),
