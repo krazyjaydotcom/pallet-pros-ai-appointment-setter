@@ -1,0 +1,26 @@
+{
+  "name": "pallet-pros-ai-appointment-setter",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:web": "npm run dev -w @pallet-pros/web",
+    "dev:worker": "npm run dev -w @pallet-pros/worker",
+    "build:web": "npm run build -w @pallet-pros/web",
+    "build:worker": "npm run build -w @pallet-pros/worker",
+    "lint": "npm run lint -w @pallet-pros/web && npm run lint -w @pallet-pros/worker && npm run lint -w @pallet-pros/core",
+    "typecheck": "npm run typecheck -w @pallet-pros/web && npm run typecheck -w @pallet-pros/worker && npm run typecheck -w @pallet-pros/core && npm run typecheck -w @pallet-pros/db",
+    "test": "npm run test -w @pallet-pros/core",
+    "dev": "concurrently -n web,worker -c blue,magenta \"npm run dev:web\" \"npm run dev:worker\""
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.5",
+    "concurrently": "^9.0.1",
+    "eslint": "^9.39.5",
+    "eslint-config-next": "^16.2.10",
+    "globals": "^17.7.0",
+    "typescript-eslint": "^8.64.0"
+  }
+}

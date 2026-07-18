@@ -1,0 +1,408 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum OperatingMode {
+  LOG_ONLY
+  APPROVAL_ONLY
+  LIMITED_AUTO_SEND
+  FULL_AUTO_SEND
+}
+
+enum KnowledgeStatus {
+  Draft
+  Published
+  Archived
+}
+
+enum ApprovalStatus {
+  pending
+  approved
+  rejected
+  edited
+  taken_over
+}
+
+enum MessageDirection {
+  incoming
+  outgoing
+}
+
+enum JobStatus {
+  pending
+  processing
+  completed
+  failed
+  dead_letter
+}
+
+model AdminUser {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  passwordHash  String
+  role          String    @default("administrator")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  sessions      Session[]
+  appSettings   AppSetting[]
+  auditLogs     AuditLog[]
+}
+
+model Session {
+  id            String    @id @default(cuid())
+  userId        String
+  user          AdminUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash     String    @unique
+  expiresAt     DateTime
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model AppSetting {
+  id            String    @id @default(cuid())
+  key           String    @unique
+  value         Json
+  updatedById   String?
+  updatedBy     AdminUser? @relation(fields: [updatedById], references: [id], onDelete: SetNull)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model KommoCredential {
+  id                  String   @id @default(cuid())
+  accountId           String   @unique
+  subdomain           String
+  encryptedPayload    String
+  accessTokenExpiresAt DateTime?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+}
+
+model Lead {
+  id                String         @id @default(cuid())
+  kommoLeadId       String?        @unique
+  kommoContactId    String?        @unique
+  name              String
+  city              String?
+  state             String?
+  hasTruck          Boolean?
+  hasTrailer        Boolean?
+  watchedTraining   Boolean?
+  appointmentInterest Boolean?
+  stage             String?
+  source            String?
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  conversations     Conversation[]
+  messages          Message[]
+  contacts          Contact[]
+}
+
+model Contact {
+  id              String        @id @default(cuid())
+  kommoContactId  String?       @unique
+  kommoLeadId     String?
+  leadId          String?
+  lead            Lead?         @relation(fields: [leadId], references: [id], onDelete: SetNull)
+  name            String?
+  phone           String?
+  email           String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+}
+
+model Conversation {
+  id                    String             @id @default(cuid())
+  kommoConversationId   String?            @unique
+  kommoLeadId           String?
+  kommoContactId        String?
+  channel               String?
+  leadId                String?
+  lead                  Lead?              @relation(fields: [leadId], references: [id], onDelete: SetNull)
+  summary               ConversationSummary?
+  messages              Message[]
+  aiDecisions           AIDecision[]
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
+
+  @@index([leadId])
+}
+
+model Message {
+  id                   String          @id @default(cuid())
+  externalMessageId    String          @unique
+  conversationId       String
+  conversation         Conversation    @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  leadId               String?
+  lead                 Lead?           @relation(fields: [leadId], references: [id], onDelete: SetNull)
+  direction            MessageDirection
+  text                 String
+  rawPayload           Json
+  channel              String?
+  createdAt            DateTime        @default(now())
+  sentAt               DateTime?
+  receivedAt           DateTime?
+  processedAt          DateTime?
+  redactedAt           DateTime?
+
+  @@index([conversationId, createdAt])
+  @@index([leadId])
+}
+
+model WebhookEvent {
+  id                String   @id @default(cuid())
+  externalEventId   String?  @unique
+  eventType         String
+  rawPayload        Json
+  redactedPayload   Json?
+  source            String?
+  receivedAt        DateTime @default(now())
+  processedAt       DateTime?
+  dedupeHash        String?  @unique
+  status            String   @default("received")
+}
+
+model QueueJob {
+  id              String   @id @default(cuid())
+  queueName       String
+  jobKey          String?  @unique
+  payload         Json
+  status          JobStatus @default(pending)
+  attempts        Int      @default(0)
+  lastError       String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  completedAt     DateTime?
+}
+
+model AIDecision {
+  id                    String            @id @default(cuid())
+  conversationId        String
+  conversation          Conversation      @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  model                 String
+  responseId            String?
+  action                String
+  reason                String
+  confidence            Float
+  intent                String
+  sentiment             String
+  leadStage             String
+  rawOutput             Json
+  createdAt             DateTime          @default(now())
+  usage                 UsageRecord?
+  proposedResponse      ProposedResponse?
+  approvedExamplesUsed   String[]
+  knowledgeEntriesUsed   String[]
+
+  @@index([conversationId, createdAt])
+}
+
+model ProposedResponse {
+  id               String          @id @default(cuid())
+  decisionId       String          @unique
+  decision         AIDecision      @relation(fields: [decisionId], references: [id], onDelete: Cascade)
+  reply            String?
+  editedReply      String?
+  status           ApprovalStatus  @default(pending)
+  requiresHumanReason String?
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  approvals        ApprovalAction[]
+  sendAttempts     SendAttempt[]
+}
+
+model ApprovalAction {
+  id                 String          @id @default(cuid())
+  proposedResponseId String
+  proposedResponse   ProposedResponse @relation(fields: [proposedResponseId], references: [id], onDelete: Cascade)
+  userId             String?
+  action             ApprovalStatus
+  notes              String?
+  createdAt          DateTime        @default(now())
+}
+
+model SendAttempt {
+  id                 String          @id @default(cuid())
+  proposedResponseId String
+  proposedResponse   ProposedResponse @relation(fields: [proposedResponseId], references: [id], onDelete: Cascade)
+  idempotencyKey     String          @unique
+  status             String
+  externalMessageId  String?
+  errorMessage      String?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+}
+
+model ConversationSummary {
+  id              String       @id @default(cuid())
+  conversationId  String       @unique
+  conversation    Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  summary         String
+  updatedAt       DateTime     @updatedAt
+}
+
+model KnowledgeEntry {
+  id                        String                 @id @default(cuid())
+  title                     String
+  category                  String
+  content                   String
+  retrievalSummary          String
+  tags                      String[]
+  priority                  Int                    @default(0)
+  status                    KnowledgeStatus        @default(Draft)
+  applicableLeadStages      String[]
+  applicableProspectConditions String[]
+  author                    String
+  archived                  Boolean                @default(false)
+  createdAt                 DateTime               @default(now())
+  updatedAt                 DateTime               @updatedAt
+  publishedAt               DateTime?
+  version                   Int                    @default(1)
+  previousVersionId         String?
+  versions                  KnowledgeEntryVersion[]
+
+  @@index([status, category, priority])
+}
+
+model KnowledgeEntryVersion {
+  id                        String          @id @default(cuid())
+  entryId                   String
+  entry                     KnowledgeEntry  @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  title                     String
+  category                  String
+  content                   String
+  retrievalSummary          String
+  tags                      String[]
+  priority                  Int
+  status                    KnowledgeStatus
+  applicableLeadStages      String[]
+  applicableProspectConditions String[]
+  author                    String
+  archived                  Boolean
+  createdAt                 DateTime        @default(now())
+  publishedAt               DateTime?
+  version                   Int
+  previousVersionId         String?
+}
+
+model CommunicationProfile {
+  id                   String                      @id @default(cuid())
+  name                 String
+  defaultTone          String
+  formalityLevel       String
+  preferredLength      String
+  maximumQuestions     Int
+  emojiUsage           String
+  slangAllowance       String
+  appointmentAggressiveness String
+  preferredPhrases     String[]
+  prohibitedPhrases    String[]
+  globalInstructions   String
+  status               KnowledgeStatus            @default(Draft)
+  version              Int                        @default(1)
+  publishedAt          DateTime?
+  archived             Boolean                    @default(false)
+  createdAt            DateTime                   @default(now())
+  updatedAt            DateTime                   @updatedAt
+  versions             CommunicationProfileVersion[]
+}
+
+model CommunicationProfileVersion {
+  id                   String                 @id @default(cuid())
+  profileId            String
+  profile              CommunicationProfile   @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  name                 String
+  defaultTone          String
+  formalityLevel       String
+  preferredLength      String
+  maximumQuestions     Int
+  emojiUsage           String
+  slangAllowance       String
+  appointmentAggressiveness String
+  preferredPhrases     String[]
+  prohibitedPhrases    String[]
+  globalInstructions   String
+  status               KnowledgeStatus
+  version              Int
+  publishedAt          DateTime?
+  archived             Boolean
+  createdAt            DateTime           @default(now())
+}
+
+model ApprovedExample {
+  id                String                  @id @default(cuid())
+  prospectMessage   String
+  conversationContext String
+  leadStage         String
+  prospectAttributes Json
+  approvedResponse  String
+  explanation      String
+  tags             String[]
+  priority         Int                     @default(0)
+  active           Boolean                 @default(false)
+  createdAt        DateTime                @default(now())
+  updatedAt        DateTime                @updatedAt
+  versions         ApprovedExampleVersion[]
+}
+
+model ApprovedExampleVersion {
+  id                String           @id @default(cuid())
+  exampleId         String
+  example           ApprovedExample  @relation(fields: [exampleId], references: [id], onDelete: Cascade)
+  prospectMessage   String
+  conversationContext String
+  leadStage         String
+  prospectAttributes Json
+  approvedResponse  String
+  explanation      String
+  tags             String[]
+  priority         Int
+  active           Boolean
+  createdAt        DateTime         @default(now())
+  version          Int
+}
+
+model UsageRecord {
+  id                 String      @id @default(cuid())
+  decisionId         String      @unique
+  decision           AIDecision   @relation(fields: [decisionId], references: [id], onDelete: Cascade)
+  model              String
+  responseId         String?
+  inputTokens        Int
+  cachedInputTokens  Int         @default(0)
+  outputTokens       Int
+  estimatedCost      Float
+  rawUsage           Json?
+  createdAt          DateTime    @default(now())
+}
+
+model ErrorRecord {
+  id                String   @id @default(cuid())
+  scope             String
+  message           String
+  stack             String?
+  payload           Json?
+  createdAt         DateTime @default(now())
+  resolvedAt        DateTime?
+}
+
+model AuditLog {
+  id                String      @id @default(cuid())
+  actorUserId       String?
+  actorUser         AdminUser?  @relation(fields: [actorUserId], references: [id], onDelete: SetNull)
+  action            String
+  entityType        String
+  entityId          String?
+  beforeState       Json?
+  afterState        Json?
+  metadata          Json?
+  createdAt         DateTime    @default(now())
+}

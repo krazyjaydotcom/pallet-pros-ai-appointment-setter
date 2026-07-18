@@ -1,0 +1,40 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "jsx": "preserve",
+    "baseUrl": ".",
+    "paths": {
+      "@/*": [
+        "./*"
+      ],
+      "@pallet-pros/core": [
+        "../../packages/core/src/index.ts"
+      ],
+      "@pallet-pros/core/*": [
+        "../../packages/core/src/*"
+      ],
+      "@pallet-pros/db": [
+        "../../packages/db/src/index.ts"
+      ],
+      "@pallet-pros/db/*": [
+        "../../packages/db/src/*"
+      ]
+    },
+    "incremental": true,
+    "isolatedModules": true
+  },
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}

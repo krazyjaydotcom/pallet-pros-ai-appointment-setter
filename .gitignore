@@ -1,0 +1,17 @@
+node_modules
+.next
+dist
+coverage
+.turbo
+*.log
+.env
+.env.local
+.DS_Store
+prisma/dev.db
+apps/web/.next
+apps/worker/dist
+packages/db/generated
+playwright-report
+test-results
+work/
+outputs/

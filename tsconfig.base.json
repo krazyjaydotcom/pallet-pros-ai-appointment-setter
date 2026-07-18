@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "resolveJsonModule": true,
+    "allowJs": false,
+    "checkJs": false,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "baseUrl": ".",
+    "paths": {
+      "@pallet-pros/core": ["packages/core/src/index.ts"],
+      "@pallet-pros/core/*": ["packages/core/src/*"],
+      "@pallet-pros/db": ["packages/db/src/index.ts"],
+      "@pallet-pros/db/*": ["packages/db/src/*"]
+    }
+  }
+}

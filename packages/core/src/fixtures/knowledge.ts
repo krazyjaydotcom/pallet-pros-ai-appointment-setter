@@ -1,0 +1,40 @@
+export const sampleKnowledgeEntries = [
+  {
+    id: "kb_business_overview",
+    title: "Business overview",
+    category: "Business overview",
+    content: "Pallet Pros Academy teaches a buyer-first pallet business model focused on local buyers and simple startup steps.",
+    retrievalSummary: "High-level explanation of the business model.",
+    tags: ["overview", "buyer-first"],
+    priority: 100,
+    status: "Published",
+    applicableLeadStages: ["new", "qualifying"],
+    applicableProspectConditions: ["interested", "not qualified yet"],
+    createdAt: new Date("2026-07-01T00:00:00Z"),
+    updatedAt: new Date("2026-07-01T00:00:00Z"),
+    publishedAt: new Date("2026-07-01T00:00:00Z"),
+    version: 1,
+    author: "system",
+    previousVersionIds: [],
+    archived: false
+  },
+  {
+    id: "kb_training_url",
+    title: "Training URL",
+    category: "Training",
+    content: "The free training link is shared when a prospect is interested in learning the model.",
+    retrievalSummary: "Use when directing prospects to the training.",
+    tags: ["training", "link"],
+    priority: 120,
+    status: "Published",
+    applicableLeadStages: ["new", "qualifying", "booked"],
+    applicableProspectConditions: ["interested"],
+    createdAt: new Date("2026-07-01T00:00:00Z"),
+    updatedAt: new Date("2026-07-01T00:00:00Z"),
+    publishedAt: new Date("2026-07-01T00:00:00Z"),
+    version: 1,
+    author: "system",
+    previousVersionIds: [],
+    archived: false
+  }
+];
