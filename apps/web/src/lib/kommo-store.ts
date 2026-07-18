@@ -119,7 +119,7 @@ export function buildKommoAuthUrl(state: string) {
     throw new Error("Kommo OAuth env vars are not fully configured");
   }
 
-  const url = new URL(`https://${subdomain}.kommo.com/oauth`);
+  const url = new URL("https://www.kommo.com/oauth");
   url.searchParams.set("client_id", clientId);
   url.searchParams.set("state", state);
   url.searchParams.set("mode", "post_message");
