@@ -3,6 +3,7 @@ import "server-only";
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from "crypto";
 import { mkdir, readFile, writeFile } from "fs/promises";
 import path from "path";
+import { prisma } from "../../../../packages/db/src/client";
 import { upsertConversation, type UiConversation } from "./mock-store";
 
 type StoredKommoCredential = {
@@ -36,6 +37,10 @@ const DEFAULT_STATE: KommoState = {
   events: []
 };
 
+function shouldUseDatabase() {
+  return Boolean(process.env.DATABASE_URL);
+}
+
 function getStatePath() {
   return path.resolve(process.cwd(), "../../work/kommo-state.json");
 }
@@ -53,7 +58,85 @@ async function ensureStateFile() {
   return statePath;
 }
 
+async function readCredentialFromDatabase(): Promise<StoredKommoCredential | null> {
+  try {
+    const credential = await prisma.kommoCredential.findFirst({
+      orderBy: { updatedAt: "desc" }
+    });
+
+    if (!credential) return null;
+
+    return {
+      accountId: credential.accountId,
+      subdomain: credential.subdomain,
+      encryptedPayload: credential.encryptedPayload,
+      expiresAt: credential.accessTokenExpiresAt ? credential.accessTokenExpiresAt.toISOString() : null,
+      installedAt: credential.createdAt.toISOString(),
+      updatedAt: credential.updatedAt.toISOString()
+    };
+  } catch {
+    return null;
+  }
+}
+
+async function writeCredentialToDatabase(input: StoredKommoCredential) {
+  try {
+    await prisma.kommoCredential.upsert({
+      where: { accountId: input.accountId },
+      create: {
+        accountId: input.accountId,
+        subdomain: input.subdomain,
+        encryptedPayload: input.encryptedPayload,
+        accessTokenExpiresAt: input.expiresAt ? new Date(input.expiresAt) : null
+      },
+      update: {
+        subdomain: input.subdomain,
+        encryptedPayload: input.encryptedPayload,
+        accessTokenExpiresAt: input.expiresAt ? new Date(input.expiresAt) : null
+      }
+    });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function recordWebhookEventToDatabase(input: StoredKommoEvent) {
+  try {
+    await prisma.webhookEvent.upsert({
+      where: { externalEventId: input.eventId },
+      create: {
+        externalEventId: input.eventId,
+        eventType: "kommo.message",
+        rawPayload: input.raw,
+        source: input.channel ?? "Kommo",
+        receivedAt: new Date(input.receivedAt),
+        status: "received"
+      },
+      update: {
+        rawPayload: input.raw,
+        source: input.channel ?? "Kommo",
+        receivedAt: new Date(input.receivedAt),
+        status: "received"
+      }
+    });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 async function readState(): Promise<KommoState> {
+  if (shouldUseDatabase()) {
+    const credential = await readCredentialFromDatabase();
+    if (credential) {
+      return {
+        credentials: credential,
+        events: []
+      };
+    }
+  }
+
   const statePath = await ensureStateFile();
   const raw = await readFile(statePath, "utf8");
   try {
@@ -65,6 +148,13 @@ async function readState(): Promise<KommoState> {
 }
 
 async function writeState(nextState: KommoState) {
+  if (shouldUseDatabase() && nextState.credentials) {
+    const saved = await writeCredentialToDatabase(nextState.credentials);
+    if (saved) {
+      return nextState;
+    }
+  }
+
   const statePath = await ensureStateFile();
   await writeFile(statePath, JSON.stringify(nextState, null, 2), "utf8");
   return nextState;
@@ -207,6 +297,13 @@ export async function saveKommoCredential(input: {
     }
   };
 
+  if (shouldUseDatabase()) {
+    const saved = await writeCredentialToDatabase(nextState.credentials);
+    if (saved) {
+      return { encryptedPayload, credential: nextState.credentials };
+    }
+  }
+
   await writeState(nextState);
   return { encryptedPayload, credential: nextState.credentials };
 }
@@ -238,6 +335,10 @@ export async function recordKommoEvent(input: {
   text: string | null;
   raw: unknown;
 }) {
+  if (shouldUseDatabase()) {
+    await recordWebhookEventToDatabase(input);
+  }
+
   const state = await readState();
   const nextEvents = [
     {

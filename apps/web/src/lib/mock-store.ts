@@ -5,6 +5,7 @@ import path from "path";
 import { sampleKnowledgeEntries } from "@pallet-pros/core/fixtures/knowledge";
 import { sampleApprovedExamples } from "@pallet-pros/core/fixtures/examples";
 import { mockOpenAIDecision } from "@pallet-pros/core/fixtures/openai";
+import { prisma } from "../../../../packages/db/src/client";
 
 type UiKnowledgeStatus = "Draft" | "Published" | "Archived";
 type UiConversationStatus = "approved" | "needs review" | "draft" | "rejected";
@@ -95,6 +96,8 @@ export type UiState = {
 };
 
 type PersistedUiState = UiState;
+
+const UI_STATE_KEY = "ui-state-v1";
 
 const DEFAULT_STATE: PersistedUiState = {
   summary: {
@@ -221,6 +224,10 @@ function getStatePath() {
   return candidates[0];
 }
 
+function shouldUseDatabase() {
+  return Boolean(process.env.DATABASE_URL);
+}
+
 async function ensureStateFile() {
   const statePath = getStatePath();
   await mkdir(path.dirname(statePath), { recursive: true });
@@ -234,7 +241,46 @@ async function ensureStateFile() {
   return statePath;
 }
 
+async function readStateFromDatabase(): Promise<PersistedUiState | null> {
+  try {
+    const setting = await prisma.appSetting.findUnique({ where: { key: UI_STATE_KEY } });
+
+    if (!setting?.value) {
+      return null;
+    }
+
+    return setting.value as PersistedUiState;
+  } catch {
+    return null;
+  }
+}
+
+async function writeStateToDatabase(nextState: PersistedUiState) {
+  try {
+    await prisma.appSetting.upsert({
+      where: { key: UI_STATE_KEY },
+      create: {
+        key: UI_STATE_KEY,
+        value: nextState
+      },
+      update: {
+        value: nextState
+      }
+    });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export async function readUiState(): Promise<PersistedUiState> {
+  if (shouldUseDatabase()) {
+    const dbState = await readStateFromDatabase();
+    if (dbState) {
+      return dbState;
+    }
+  }
+
   const statePath = await ensureStateFile();
   const raw = await readFile(statePath, "utf8");
   try {
@@ -246,6 +292,13 @@ export async function readUiState(): Promise<PersistedUiState> {
 }
 
 export async function writeUiState(nextState: PersistedUiState) {
+  if (shouldUseDatabase()) {
+    const saved = await writeStateToDatabase(nextState);
+    if (saved) {
+      return nextState;
+    }
+  }
+
   const statePath = await ensureStateFile();
   await writeFile(statePath, JSON.stringify(nextState, null, 2), "utf8");
   return nextState;
