@@ -12,8 +12,8 @@ const conversationPatchSchema = z.object({
   stage: z.string().min(1).optional()
 });
 
-export async function PATCH(request: Request, { params }: { params: { id: string } }) {
-  const { id } = params;
+export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const body = await request.json().catch(() => ({}));
   const parsed = conversationPatchSchema.safeParse(body);
 
