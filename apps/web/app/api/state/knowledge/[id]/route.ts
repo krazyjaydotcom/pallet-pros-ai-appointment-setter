@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { updateKnowledgeEntry } from "@/src/lib/mock-store";
 
+export const dynamic = "force-dynamic";
+
 const knowledgePatchSchema = z.object({
   title: z.string().min(1).optional(),
   category: z.string().min(1).optional(),
@@ -13,8 +15,8 @@ const knowledgePatchSchema = z.object({
   archived: z.boolean().optional()
 });
 
-export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
+export async function PATCH(request: Request, { params }: { params: { id: string } }) {
+  const { id } = params;
   const body = await request.json().catch(() => ({}));
   const parsed = knowledgePatchSchema.safeParse(body);
 

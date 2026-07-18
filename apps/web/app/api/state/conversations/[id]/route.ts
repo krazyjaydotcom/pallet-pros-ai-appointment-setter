@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { updateConversation } from "@/src/lib/mock-store";
 
+export const dynamic = "force-dynamic";
+
 const conversationPatchSchema = z.object({
   status: z.enum(["approved", "needs review", "draft", "rejected"]).optional(),
   note: z.string().min(1).optional(),
@@ -10,8 +12,8 @@ const conversationPatchSchema = z.object({
   stage: z.string().min(1).optional()
 });
 
-export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
+export async function PATCH(request: Request, { params }: { params: { id: string } }) {
+  const { id } = params;
   const body = await request.json().catch(() => ({}));
   const parsed = conversationPatchSchema.safeParse(body);
 
