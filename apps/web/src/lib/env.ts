@@ -3,6 +3,7 @@ import { z } from "zod";
 const envSchema = z.object({
   NODE_ENV: z.string().optional(),
   APP_BASE_URL: z.string().optional(),
+  APP_STATE_DIR: z.string().optional(),
   DATABASE_URL: z.string().optional(),
   REDIS_URL: z.string().optional(),
   SESSION_SECRET: z.string().optional(),

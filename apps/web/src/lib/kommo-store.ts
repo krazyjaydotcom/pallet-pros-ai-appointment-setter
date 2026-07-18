@@ -1,10 +1,11 @@
 import "server-only";
 
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from "crypto";
-import { mkdir, readFile, writeFile } from "fs/promises";
 import path from "path";
 import { prisma } from "../../../../packages/db/src/client";
+import { ensureRuntimeSchema } from "./db-bootstrap";
 import { upsertConversation, type UiConversation } from "./mock-store";
+import { readJsonState, writeJsonState } from "./state-path";
 
 type StoredKommoCredential = {
   accountId: string;
@@ -37,28 +38,20 @@ const DEFAULT_STATE: KommoState = {
   events: []
 };
 
+const KOMMO_STATE_FILE = "kommo-state.json";
+const KOMMO_STATE_LEGACY_PATHS = [
+  path.resolve(process.cwd(), "../../work/kommo-state.json"),
+  path.resolve(process.cwd(), "../work/kommo-state.json"),
+  path.resolve(process.cwd(), "work/kommo-state.json")
+];
+
 function shouldUseDatabase() {
   return Boolean(process.env.DATABASE_URL);
 }
 
-function getStatePath() {
-  return path.resolve(process.cwd(), "../../work/kommo-state.json");
-}
-
-async function ensureStateFile() {
-  const statePath = getStatePath();
-  await mkdir(path.dirname(statePath), { recursive: true });
-
-  try {
-    await readFile(statePath, "utf8");
-  } catch {
-    await writeFile(statePath, JSON.stringify(DEFAULT_STATE, null, 2), "utf8");
-  }
-
-  return statePath;
-}
-
 async function readCredentialFromDatabase(): Promise<StoredKommoCredential | null> {
+  await ensureRuntimeSchema();
+
   try {
     const credential = await prisma.kommoCredential.findFirst({
       orderBy: { updatedAt: "desc" }
@@ -80,6 +73,8 @@ async function readCredentialFromDatabase(): Promise<StoredKommoCredential | nul
 }
 
 async function writeCredentialToDatabase(input: StoredKommoCredential) {
+  await ensureRuntimeSchema();
+
   try {
     await prisma.kommoCredential.upsert({
       where: { accountId: input.accountId },
@@ -102,6 +97,8 @@ async function writeCredentialToDatabase(input: StoredKommoCredential) {
 }
 
 async function recordWebhookEventToDatabase(input: StoredKommoEvent) {
+  await ensureRuntimeSchema();
+
   try {
     await prisma.webhookEvent.upsert({
       where: { externalEventId: input.eventId },
@@ -137,14 +134,11 @@ async function readState(): Promise<KommoState> {
     }
   }
 
-  const statePath = await ensureStateFile();
-  const raw = await readFile(statePath, "utf8");
-  try {
-    return JSON.parse(raw) as KommoState;
-  } catch {
-    await writeFile(statePath, JSON.stringify(DEFAULT_STATE, null, 2), "utf8");
-    return DEFAULT_STATE;
-  }
+  return readJsonState({
+    fileName: KOMMO_STATE_FILE,
+    defaultState: DEFAULT_STATE,
+    legacyFilePaths: KOMMO_STATE_LEGACY_PATHS
+  });
 }
 
 async function writeState(nextState: KommoState) {
@@ -155,9 +149,10 @@ async function writeState(nextState: KommoState) {
     }
   }
 
-  const statePath = await ensureStateFile();
-  await writeFile(statePath, JSON.stringify(nextState, null, 2), "utf8");
-  return nextState;
+  return writeJsonState({
+    fileName: KOMMO_STATE_FILE,
+    state: nextState
+  });
 }
 
 function getEncryptionKey() {

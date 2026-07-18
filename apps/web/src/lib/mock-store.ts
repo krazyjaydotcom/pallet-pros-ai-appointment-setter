@@ -1,11 +1,12 @@
 import "server-only";
 
-import { mkdir, readFile, writeFile } from "fs/promises";
 import path from "path";
 import { sampleKnowledgeEntries } from "@pallet-pros/core/fixtures/knowledge";
 import { sampleApprovedExamples } from "@pallet-pros/core/fixtures/examples";
 import { mockOpenAIDecision } from "@pallet-pros/core/fixtures/openai";
 import { prisma } from "../../../../packages/db/src/client";
+import { ensureRuntimeSchema } from "./db-bootstrap";
+import { readJsonState, writeJsonState } from "./state-path";
 
 type UiKnowledgeStatus = "Draft" | "Published" | "Archived";
 type UiConversationStatus = "approved" | "needs review" | "draft" | "rejected";
@@ -98,6 +99,7 @@ export type UiState = {
 type PersistedUiState = UiState;
 
 const UI_STATE_KEY = "ui-state-v1";
+const UI_STATE_FILE = "ui-state.json";
 
 const DEFAULT_STATE: PersistedUiState = {
   summary: {
@@ -214,34 +216,19 @@ const DEFAULT_STATE: PersistedUiState = {
   approvedExamples: sampleApprovedExamples
 };
 
-function getStatePath() {
-  const candidates = [
-    path.resolve(process.cwd(), "../../work/ui-state.json"),
-    path.resolve(process.cwd(), "../work/ui-state.json"),
-    path.resolve(process.cwd(), "work/ui-state.json")
-  ];
-
-  return candidates[0];
-}
+const UI_STATE_LEGACY_PATHS = [
+  path.resolve(process.cwd(), "../../work/ui-state.json"),
+  path.resolve(process.cwd(), "../work/ui-state.json"),
+  path.resolve(process.cwd(), "work/ui-state.json")
+];
 
 function shouldUseDatabase() {
   return Boolean(process.env.DATABASE_URL);
 }
 
-async function ensureStateFile() {
-  const statePath = getStatePath();
-  await mkdir(path.dirname(statePath), { recursive: true });
-
-  try {
-    await readFile(statePath, "utf8");
-  } catch {
-    await writeFile(statePath, JSON.stringify(DEFAULT_STATE, null, 2), "utf8");
-  }
-
-  return statePath;
-}
-
 async function readStateFromDatabase(): Promise<PersistedUiState | null> {
+  await ensureRuntimeSchema();
+
   try {
     const setting = await prisma.appSetting.findUnique({ where: { key: UI_STATE_KEY } });
 
@@ -256,6 +243,8 @@ async function readStateFromDatabase(): Promise<PersistedUiState | null> {
 }
 
 async function writeStateToDatabase(nextState: PersistedUiState) {
+  await ensureRuntimeSchema();
+
   try {
     await prisma.appSetting.upsert({
       where: { key: UI_STATE_KEY },
@@ -281,14 +270,11 @@ export async function readUiState(): Promise<PersistedUiState> {
     }
   }
 
-  const statePath = await ensureStateFile();
-  const raw = await readFile(statePath, "utf8");
-  try {
-    return JSON.parse(raw) as PersistedUiState;
-  } catch {
-    await writeFile(statePath, JSON.stringify(DEFAULT_STATE, null, 2), "utf8");
-    return DEFAULT_STATE;
-  }
+  return readJsonState({
+    fileName: UI_STATE_FILE,
+    defaultState: DEFAULT_STATE,
+    legacyFilePaths: UI_STATE_LEGACY_PATHS
+  });
 }
 
 export async function writeUiState(nextState: PersistedUiState) {
@@ -299,9 +285,10 @@ export async function writeUiState(nextState: PersistedUiState) {
     }
   }
 
-  const statePath = await ensureStateFile();
-  await writeFile(statePath, JSON.stringify(nextState, null, 2), "utf8");
-  return nextState;
+  return writeJsonState({
+    fileName: UI_STATE_FILE,
+    state: nextState
+  });
 }
 
 export async function updateKnowledgeEntry(entryId: string, patch: Partial<UiKnowledgeEntry>) {
