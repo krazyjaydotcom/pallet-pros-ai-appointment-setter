@@ -1,12 +1,11 @@
-import { LoginForm } from "./login-form";
-
 export default function LoginPage() {
-  const defaultEmail = process.env.NODE_ENV !== "production"
-    ? (process.env.DEV_ADMIN_EMAIL ?? "dev@example.com")
-    : (process.env.ADMIN_EMAIL ?? "admin@example.com");
-  const defaultPassword = process.env.NODE_ENV !== "production"
-    ? (process.env.DEV_ADMIN_PASSWORD ?? "dev-password")
-    : "";
+  const expectedEmail = process.env.ADMIN_EMAIL ?? "";
+  const passwordHash = process.env.ADMIN_PASSWORD_HASH ?? "";
+  const devEmail = process.env.DEV_ADMIN_EMAIL ?? "dev@example.com";
+  const devPassword = process.env.DEV_ADMIN_PASSWORD ?? "dev-password";
+  const productionAuthConfigured = Boolean(expectedEmail && passwordHash);
+  const defaultEmail = productionAuthConfigured ? expectedEmail : devEmail;
+  const defaultPassword = productionAuthConfigured ? "" : devPassword;
 
   return (
     <main className="login-shell">
@@ -16,7 +15,7 @@ export default function LoginPage() {
             <span className="pill">Admin login</span>
             <h1>Sign in to the review console.</h1>
             <p className="muted">
-              The interface is now tuned to feel like a modern SaaS workspace: calmer surfaces, clearer hierarchy, and stronger visual separation between live controls and review-only surfaces.
+              The interface is tuned to feel like a modern SaaS workspace: calmer surfaces, clearer hierarchy, and stronger visual separation between live controls and review-only surfaces.
             </p>
           </div>
 
@@ -27,10 +26,10 @@ export default function LoginPage() {
             </div>
             <div>
               <span className="muted">Production guardrail</span>
-              <strong>Hash required</strong>
+              <strong>{productionAuthConfigured ? "Hash required" : "Dev fallback enabled"}</strong>
             </div>
             <div>
-              <span className="muted">Dev fallback</span>
+              <span className="muted">Dev login</span>
               <strong><code>{defaultEmail}</code></strong>
             </div>
           </div>
@@ -40,14 +39,40 @@ export default function LoginPage() {
           <div className="section-header">
             <p className="eyebrow">Enter workspace</p>
             <h2>Use the credentials that match your environment.</h2>
-            <p>In development you can use the fallback credentials shown below. In production the real admin email and password hash are required.</p>
+            <p>
+              In development you can use the fallback credentials shown below. In production the real admin email and password hash are required.
+            </p>
           </div>
 
           <p className="callout">
             Dev login: <code>{defaultEmail}</code> / <code>{defaultPassword}</code>
           </p>
 
-          <LoginForm defaultEmail={defaultEmail} defaultPassword={defaultPassword} />
+          <form className="stack" method="post" action="/api/auth/login">
+            <label className="field">
+              <span>Email</span>
+              <input
+                className="input"
+                name="email"
+                type="email"
+                autoComplete="email"
+                defaultValue={defaultEmail}
+              />
+            </label>
+            <label className="field">
+              <span>Password</span>
+              <input
+                className="input"
+                name="password"
+                type="password"
+                autoComplete="current-password"
+                defaultValue={defaultPassword}
+              />
+            </label>
+            <button className="button" type="submit">
+              Sign in
+            </button>
+          </form>
         </section>
       </div>
     </main>
