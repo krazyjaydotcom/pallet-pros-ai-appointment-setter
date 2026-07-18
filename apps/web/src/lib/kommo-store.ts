@@ -298,10 +298,11 @@ export async function saveKommoCredential(input: {
   };
 
   if (shouldUseDatabase()) {
-    if (nextState.credentials) {
-      const saved = await writeCredentialToDatabase(nextState.credentials);
+    const credential = nextState.credentials;
+    if (credential) {
+      const saved = await writeCredentialToDatabase(credential);
       if (saved) {
-        return { encryptedPayload, credential: nextState.credentials };
+        return { encryptedPayload, credential };
       }
     }
   }
