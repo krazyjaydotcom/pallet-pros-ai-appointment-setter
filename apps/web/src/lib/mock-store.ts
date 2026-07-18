@@ -4,8 +4,8 @@ import path from "path";
 import { sampleKnowledgeEntries } from "@pallet-pros/core/fixtures/knowledge";
 import { sampleApprovedExamples } from "@pallet-pros/core/fixtures/examples";
 import { mockOpenAIDecision } from "@pallet-pros/core/fixtures/openai";
-import { prisma } from "../../../../packages/db/src/client";
 import { ensureRuntimeSchema } from "./db-bootstrap";
+import { getPrismaClient } from "./prisma-client";
 import { readJsonState, writeJsonState } from "./state-path";
 
 type UiKnowledgeStatus = "Draft" | "Published" | "Archived";
@@ -228,6 +228,7 @@ function shouldUseDatabase() {
 
 async function readStateFromDatabase(): Promise<PersistedUiState | null> {
   await ensureRuntimeSchema();
+  const prisma = await getPrismaClient();
 
   try {
     const setting = await prisma.appSetting.findUnique({ where: { key: UI_STATE_KEY } });
@@ -244,6 +245,7 @@ async function readStateFromDatabase(): Promise<PersistedUiState | null> {
 
 async function writeStateToDatabase(nextState: PersistedUiState) {
   await ensureRuntimeSchema();
+  const prisma = await getPrismaClient();
 
   try {
     await prisma.appSetting.upsert({

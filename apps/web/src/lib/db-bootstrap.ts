@@ -1,6 +1,6 @@
 import "server-only";
 
-import { prisma } from "../../../../packages/db/src/client";
+import { getPrismaClient } from "./prisma-client";
 
 const BOOTSTRAP_STATEMENTS = [
   `
@@ -49,6 +49,8 @@ export async function ensureRuntimeSchema() {
 
   if (!bootstrapPromise) {
     bootstrapPromise = (async () => {
+      const prisma = await getPrismaClient();
+
       for (const statement of BOOTSTRAP_STATEMENTS) {
         await prisma.$executeRawUnsafe(statement);
       }

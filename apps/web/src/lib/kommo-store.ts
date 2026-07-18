@@ -2,8 +2,8 @@ import "server-only";
 
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from "crypto";
 import path from "path";
-import { prisma } from "../../../../packages/db/src/client";
 import { ensureRuntimeSchema } from "./db-bootstrap";
+import { getPrismaClient } from "./prisma-client";
 import { upsertConversation, type UiConversation } from "./mock-store";
 import { readJsonState, writeJsonState } from "./state-path";
 
@@ -51,6 +51,7 @@ function shouldUseDatabase() {
 
 async function readCredentialFromDatabase(): Promise<StoredKommoCredential | null> {
   await ensureRuntimeSchema();
+  const prisma = await getPrismaClient();
 
   try {
     const credential = await prisma.kommoCredential.findFirst({
@@ -74,6 +75,7 @@ async function readCredentialFromDatabase(): Promise<StoredKommoCredential | nul
 
 async function writeCredentialToDatabase(input: StoredKommoCredential) {
   await ensureRuntimeSchema();
+  const prisma = await getPrismaClient();
 
   try {
     await prisma.kommoCredential.upsert({
@@ -98,6 +100,7 @@ async function writeCredentialToDatabase(input: StoredKommoCredential) {
 
 async function recordWebhookEventToDatabase(input: StoredKommoEvent) {
   await ensureRuntimeSchema();
+  const prisma = await getPrismaClient();
 
   try {
     await prisma.webhookEvent.upsert({
