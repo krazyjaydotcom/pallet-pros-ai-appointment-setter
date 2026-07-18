@@ -46,7 +46,10 @@ export async function POST(request: Request) {
     const wantsJson = contentType.includes("application/json");
     const response = wantsJson
       ? NextResponse.json({ ok: true })
-      : NextResponse.redirect(new URL("/dashboard", request.url));
+      : new NextResponse(null, { status: 303 });
+    if (!wantsJson) {
+      response.headers.set("Location", "/dashboard");
+    }
     const cookieParts = [
       `${SESSION_COOKIE}=dev-session`,
       "HttpOnly",

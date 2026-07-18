@@ -10,8 +10,9 @@ export function middleware(request: NextRequest) {
 
   const hasSession = request.cookies.has("ppaa_admin_session");
   if (!hasSession) {
-    const loginUrl = new URL("/login", request.url);
-    return NextResponse.redirect(loginUrl);
+    const response = new NextResponse(null, { status: 307 });
+    response.headers.set("Location", "/login");
+    return response;
   }
 
   return NextResponse.next();
