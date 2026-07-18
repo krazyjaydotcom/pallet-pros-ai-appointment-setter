@@ -5,6 +5,17 @@ import {
 } from "@pallet-pros/core";
 import { ingestKommoWebhookEvent } from "@/src/lib/kommo-store";
 
+export async function GET() {
+  return NextResponse.json({
+    ok: true,
+    note: "Kommo webhook endpoint is live."
+  });
+}
+
+export async function HEAD() {
+  return new NextResponse(null, { status: 200 });
+}
+
 export async function POST(request: Request) {
   const rawBody = await request.text();
   const parsed = KommoWebhookEnvelopeSchema.safeParse(rawBody ? JSON.parse(rawBody) : {});
