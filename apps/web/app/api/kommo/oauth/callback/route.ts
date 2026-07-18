@@ -5,6 +5,9 @@ import {
   saveKommoCredential
 } from "@/src/lib/kommo-store";
 
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
+
 function renderPostback(message: string, closeWindow = false) {
   return new NextResponse(
     `<!doctype html>

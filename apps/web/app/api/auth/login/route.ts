@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { safeComparePassword, SESSION_COOKIE } from "@/src/lib/auth";
 
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
+
 const loginSchema = z.object({
   email: z.string().email(),
   password: z.string().min(1)
