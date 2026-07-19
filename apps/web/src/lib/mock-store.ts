@@ -1,5 +1,3 @@
-import "server-only";
-
 import path from "path";
 import { sampleKnowledgeEntries } from "@pallet-pros/core/fixtures/knowledge";
 import { sampleApprovedExamples } from "@pallet-pros/core/fixtures/examples";

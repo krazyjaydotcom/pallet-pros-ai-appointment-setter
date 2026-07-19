@@ -1,5 +1,3 @@
-import "server-only";
-
 import { getPrismaClient } from "./prisma-client";
 
 const BOOTSTRAP_STATEMENTS = [
