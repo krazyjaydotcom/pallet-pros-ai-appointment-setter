@@ -227,10 +227,9 @@ function shouldUseDatabase() {
 }
 
 async function readStateFromDatabase(): Promise<PersistedUiState | null> {
-  await ensureRuntimeSchema();
-  const prisma = await getPrismaClient();
-
   try {
+    await ensureRuntimeSchema();
+    const prisma = await getPrismaClient();
     const setting = await prisma.appSetting.findUnique({ where: { key: UI_STATE_KEY } });
 
     if (!setting?.value) {
@@ -244,10 +243,9 @@ async function readStateFromDatabase(): Promise<PersistedUiState | null> {
 }
 
 async function writeStateToDatabase(nextState: PersistedUiState) {
-  await ensureRuntimeSchema();
-  const prisma = await getPrismaClient();
-
   try {
+    await ensureRuntimeSchema();
+    const prisma = await getPrismaClient();
     await prisma.appSetting.upsert({
       where: { key: UI_STATE_KEY },
       create: {

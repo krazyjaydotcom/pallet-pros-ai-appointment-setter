@@ -54,10 +54,9 @@ function toJsonPayload(value: unknown) {
 }
 
 async function readCredentialFromDatabase(): Promise<StoredKommoCredential | null> {
-  await ensureRuntimeSchema();
-  const prisma = await getPrismaClient();
-
   try {
+    await ensureRuntimeSchema();
+    const prisma = await getPrismaClient();
     const credential = await prisma.kommoCredential.findFirst({
       orderBy: { updatedAt: "desc" }
     });
@@ -78,10 +77,9 @@ async function readCredentialFromDatabase(): Promise<StoredKommoCredential | nul
 }
 
 async function writeCredentialToDatabase(input: StoredKommoCredential) {
-  await ensureRuntimeSchema();
-  const prisma = await getPrismaClient();
-
   try {
+    await ensureRuntimeSchema();
+    const prisma = await getPrismaClient();
     await prisma.kommoCredential.upsert({
       where: { accountId: input.accountId },
       create: {
@@ -103,10 +101,9 @@ async function writeCredentialToDatabase(input: StoredKommoCredential) {
 }
 
 async function recordWebhookEventToDatabase(input: StoredKommoEvent) {
-  await ensureRuntimeSchema();
-  const prisma = await getPrismaClient();
-
   try {
+    await ensureRuntimeSchema();
+    const prisma = await getPrismaClient();
     await prisma.webhookEvent.upsert({
       where: { externalEventId: input.eventId },
       create: {
@@ -314,19 +311,24 @@ export async function saveKommoCredential(input: {
 }
 
 export async function readKommoCredential() {
-  const state = await readState();
-  if (!state.credentials) return null;
+  try {
+    const state = await readState();
+    if (!state.credentials) return null;
 
-  const payload = decryptJson<{ accessToken: string; refreshToken: string }>(state.credentials.encryptedPayload);
-  return {
-    accountId: state.credentials.accountId,
-    subdomain: state.credentials.subdomain,
-    accessToken: payload.accessToken,
-    refreshToken: payload.refreshToken,
-    expiresAt: state.credentials.expiresAt,
-    installedAt: state.credentials.installedAt,
-    updatedAt: state.credentials.updatedAt
-  };
+    const payload = decryptJson<{ accessToken: string; refreshToken: string }>(state.credentials.encryptedPayload);
+    return {
+      accountId: state.credentials.accountId,
+      subdomain: state.credentials.subdomain,
+      accessToken: payload.accessToken,
+      refreshToken: payload.refreshToken,
+      expiresAt: state.credentials.expiresAt,
+      installedAt: state.credentials.installedAt,
+      updatedAt: state.credentials.updatedAt
+    };
+  } catch (error) {
+    console.error("[kommo-store] failed to read credential", { error: String(error) });
+    return null;
+  }
 }
 
 export async function recordKommoEvent(input: {
