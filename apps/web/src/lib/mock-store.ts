@@ -279,15 +279,7 @@ export async function readUiState(): Promise<PersistedUiState> {
   if (shouldUseDatabase()) {
     const [dbState, fileState] = await Promise.all([readStateFromDatabase(), readStateFromFile()]);
     if (dbState) {
-      return {
-        ...fileState,
-        ...dbState,
-        conversations: fileState.conversations,
-        knowledgeEntries: fileState.knowledgeEntries,
-        communicationProfile: fileState.communicationProfile,
-        playground: fileState.playground,
-        approvedExamples: fileState.approvedExamples
-      };
+      return dbState;
     }
 
     return fileState;
