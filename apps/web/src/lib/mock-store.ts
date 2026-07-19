@@ -240,6 +240,14 @@ async function readStateFromDatabase(): Promise<PersistedUiState | null> {
   }
 }
 
+async function readStateFromFile(): Promise<PersistedUiState> {
+  return readJsonState({
+    fileName: UI_STATE_FILE,
+    defaultState: DEFAULT_STATE,
+    legacyFilePaths: UI_STATE_LEGACY_PATHS
+  });
+}
+
 async function writeStateToDatabase(nextState: PersistedUiState) {
   try {
     await ensureRuntimeSchema();
@@ -260,37 +268,47 @@ async function writeStateToDatabase(nextState: PersistedUiState) {
   }
 }
 
+async function writeStateToFile(nextState: PersistedUiState) {
+  return writeJsonState({
+    fileName: UI_STATE_FILE,
+    state: nextState
+  });
+}
+
 export async function readUiState(): Promise<PersistedUiState> {
   if (shouldUseDatabase()) {
-    const dbState = await readStateFromDatabase();
+    const [dbState, fileState] = await Promise.all([readStateFromDatabase(), readStateFromFile()]);
     if (dbState) {
-      return dbState;
+      return {
+        ...fileState,
+        ...dbState,
+        conversations: fileState.conversations,
+        knowledgeEntries: fileState.knowledgeEntries,
+        communicationProfile: fileState.communicationProfile,
+        playground: fileState.playground,
+        approvedExamples: fileState.approvedExamples
+      };
     }
 
-    return DEFAULT_STATE;
+    return fileState;
   }
 
-  return readJsonState({
-    fileName: UI_STATE_FILE,
-    defaultState: DEFAULT_STATE,
-    legacyFilePaths: UI_STATE_LEGACY_PATHS
-  });
+  return readStateFromFile();
 }
 
 export async function writeUiState(nextState: PersistedUiState) {
   if (shouldUseDatabase()) {
     const saved = await writeStateToDatabase(nextState);
     if (saved) {
+      await writeStateToFile(nextState);
       return nextState;
     }
 
+    await writeStateToFile(nextState);
     return nextState;
   }
 
-  return writeJsonState({
-    fileName: UI_STATE_FILE,
-    state: nextState
-  });
+  return writeStateToFile(nextState);
 }
 
 export async function updateKnowledgeEntry(entryId: string, patch: Partial<UiKnowledgeEntry>) {

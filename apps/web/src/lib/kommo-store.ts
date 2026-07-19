@@ -127,15 +127,20 @@ async function recordWebhookEventToDatabase(input: StoredKommoEvent) {
 
 async function readState(): Promise<KommoState> {
   if (shouldUseDatabase()) {
-    const credential = await readCredentialFromDatabase();
+    const [credential, fileState] = await Promise.all([readCredentialFromDatabase(), readJsonState({
+      fileName: KOMMO_STATE_FILE,
+      defaultState: DEFAULT_STATE,
+      legacyFilePaths: KOMMO_STATE_LEGACY_PATHS
+    })]);
+
     if (credential) {
       return {
-        credentials: credential,
-        events: []
+        ...fileState,
+        credentials: credential
       };
     }
 
-    return DEFAULT_STATE;
+    return fileState;
   }
 
   return readJsonState({
@@ -146,6 +151,11 @@ async function readState(): Promise<KommoState> {
 }
 
 async function writeState(nextState: KommoState) {
+  await writeJsonState({
+    fileName: KOMMO_STATE_FILE,
+    state: nextState
+  });
+
   if (shouldUseDatabase() && nextState.credentials) {
     const saved = await writeCredentialToDatabase(nextState.credentials);
     if (saved) {
@@ -155,10 +165,7 @@ async function writeState(nextState: KommoState) {
     return nextState;
   }
 
-  return writeJsonState({
-    fileName: KOMMO_STATE_FILE,
-    state: nextState
-  });
+  return nextState;
 }
 
 function getEncryptionKey() {
@@ -297,16 +304,6 @@ export async function saveKommoCredential(input: {
       updatedAt: new Date().toISOString()
     }
   };
-
-  if (shouldUseDatabase()) {
-    const credential = nextState.credentials;
-    if (credential) {
-      const saved = await writeCredentialToDatabase(credential);
-      if (saved) {
-        return { encryptedPayload, credential };
-      }
-    }
-  }
 
   await writeState(nextState);
   return { encryptedPayload, credential: nextState.credentials };
