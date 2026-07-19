@@ -49,6 +49,10 @@ function shouldUseDatabase() {
   return Boolean(process.env.DATABASE_URL);
 }
 
+function toJsonPayload(value: unknown) {
+  return JSON.parse(JSON.stringify(value)) as unknown;
+}
+
 async function readCredentialFromDatabase(): Promise<StoredKommoCredential | null> {
   await ensureRuntimeSchema();
   const prisma = await getPrismaClient();
@@ -108,13 +112,13 @@ async function recordWebhookEventToDatabase(input: StoredKommoEvent) {
       create: {
         externalEventId: input.eventId,
         eventType: "kommo.message",
-        rawPayload: input.raw,
+        rawPayload: toJsonPayload(input.raw) as never,
         source: input.channel ?? "Kommo",
         receivedAt: new Date(input.receivedAt),
         status: "received"
       },
       update: {
-        rawPayload: input.raw,
+        rawPayload: toJsonPayload(input.raw) as never,
         source: input.channel ?? "Kommo",
         receivedAt: new Date(input.receivedAt),
         status: "received"
