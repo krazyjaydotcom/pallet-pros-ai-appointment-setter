@@ -136,6 +136,8 @@ async function readState(): Promise<KommoState> {
         events: []
       };
     }
+
+    return DEFAULT_STATE;
   }
 
   return readJsonState({
@@ -151,6 +153,8 @@ async function writeState(nextState: KommoState) {
     if (saved) {
       return nextState;
     }
+
+    return nextState;
   }
 
   return writeJsonState({

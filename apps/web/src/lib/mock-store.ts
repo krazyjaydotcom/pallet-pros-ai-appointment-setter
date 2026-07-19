@@ -268,6 +268,8 @@ export async function readUiState(): Promise<PersistedUiState> {
     if (dbState) {
       return dbState;
     }
+
+    return DEFAULT_STATE;
   }
 
   return readJsonState({
@@ -283,6 +285,8 @@ export async function writeUiState(nextState: PersistedUiState) {
     if (saved) {
       return nextState;
     }
+
+    return nextState;
   }
 
   return writeJsonState({
