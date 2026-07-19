@@ -12,6 +12,7 @@ RUN npm install
 FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+RUN npm run generate -w @pallet-pros/db
 RUN npm run build:web
 
 FROM base AS runner
