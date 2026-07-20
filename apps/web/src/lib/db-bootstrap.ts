@@ -12,17 +12,6 @@ const BOOTSTRAP_STATEMENTS = [
   )
   `,
   `
-  CREATE TABLE IF NOT EXISTS "KommoCredential" (
-    "id" text PRIMARY KEY,
-    "accountId" text NOT NULL UNIQUE,
-    "subdomain" text NOT NULL,
-    "encryptedPayload" text NOT NULL,
-    "accessTokenExpiresAt" timestamp(3),
-    "createdAt" timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
-  )
-  `,
-  `
   CREATE TABLE IF NOT EXISTS "WebhookEvent" (
     "id" text PRIMARY KEY,
     "externalEventId" text UNIQUE,

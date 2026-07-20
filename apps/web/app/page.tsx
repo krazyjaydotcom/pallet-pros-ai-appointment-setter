@@ -18,9 +18,9 @@ export default async function HomePage() {
         <div className="hero-grid">
           <div className="hero-copy">
             <span className="pill">Pallet Pros Academy</span>
-            <h1>Modern approval-first AI for Kommo conversations.</h1>
+            <h1>Modern approval-first AI for reply review.</h1>
             <p>
-              We’re turning the old-school dashboard into a calmer, clearer workspace: structured reply drafts, obvious approval states, and a cleaner review flow so the whole thing feels more like a modern product than a prototype.
+              We're turning the old-school dashboard into a calmer, clearer workspace: structured reply drafts, obvious approval states, and a cleaner review flow so the whole thing feels more like a modern product than a prototype.
             </p>
             <div className="hero-actions">
               <Link className="button" href="/dashboard">Open dashboard</Link>
@@ -59,7 +59,7 @@ export default async function HomePage() {
             <h2>Turns incoming events into a readable approval queue.</h2>
           </div>
           <ul className="clean">
-            <li>Stores Kommo webhook events.</li>
+            <li>Stores incoming event records.</li>
             <li>Queues processing jobs with BullMQ.</li>
             <li>Retrieves relevant knowledge-base entries.</li>
             <li>Generates structured AI decisions.</li>
@@ -75,7 +75,7 @@ export default async function HomePage() {
             <li>Automatic sending by default.</li>
             <li>Browser automation.</li>
             <li>Polling loops.</li>
-            <li>Live Kommo or OpenAI credentials in source.</li>
+            <li>Live credentials in source.</li>
           </ul>
         </article>
       </section>

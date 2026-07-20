@@ -1,12 +1,11 @@
 import Link from "next/link";
 import { ConversationsTable } from "@/components/conversations-table";
-import { readKommoCredential } from "@/src/lib/kommo-store";
 import { readUiState } from "@/src/lib/mock-store";
 
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
-  const [state, kommoCredential] = await Promise.all([readUiState(), readKommoCredential()]);
+  const state = await readUiState();
 
   return (
     <main className="page-stack">
@@ -21,7 +20,6 @@ export default async function DashboardPage() {
             <div className="hero-actions">
               <Link className="button secondary" href="/dashboard/knowledge-base">Knowledge base</Link>
               <Link className="button secondary" href="/dashboard/communication-profile">Communication profile</Link>
-              <Link className="button secondary" href="/dashboard/kommo">Kommo setup</Link>
               <Link className="button" href="/dashboard/playground">Playground</Link>
             </div>
           </div>
@@ -59,12 +57,6 @@ export default async function DashboardPage() {
           <article className="card metric">
             <span className="muted">Latest event</span>
             <strong>{state.summary.latestEvent}</strong>
-          </article>
-          <article className="card metric">
-            <span className="muted">Kommo link</span>
-            <strong className={kommoCredential ? "status-on" : "status-off"}>
-              {kommoCredential ? `Connected (${kommoCredential.subdomain})` : "Not connected"}
-            </strong>
           </article>
         </section>
 

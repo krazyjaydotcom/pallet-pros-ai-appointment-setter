@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Pallet Pros Academy AI Appointment Setter",
-  description: "Approval-first Kommo + OpenAI dashboard for Pallet Pros Academy."
+  title: "Pallet Pros Academy Approval Console",
+  description: "Approval-first review dashboard for Pallet Pros Academy."
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

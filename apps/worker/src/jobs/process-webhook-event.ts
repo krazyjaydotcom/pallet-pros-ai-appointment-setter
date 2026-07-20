@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { normalizeLeadMessage } from "@pallet-pros/core";
 
 const PayloadSchema = z.object({
   payload: z.unknown()
@@ -7,8 +6,9 @@ const PayloadSchema = z.object({
 
 export async function processWebhookEvent(job: { eventId: string; receivedAt: string; payload: unknown }) {
   const parsed = PayloadSchema.parse({ payload: job.payload });
+  const payloadText = typeof parsed.payload === "string" ? parsed.payload : JSON.stringify(parsed.payload);
   return {
     eventId: job.eventId,
-    normalizedPreview: normalizeLeadMessage(typeof parsed.payload === "string" ? parsed.payload : JSON.stringify(parsed.payload))
+    normalizedPreview: payloadText.slice(0, 500)
   };
 }

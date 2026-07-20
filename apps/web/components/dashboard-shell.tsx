@@ -9,7 +9,6 @@ const navigation = [
   { href: "/dashboard/playground", label: "Playground" },
   { href: "/dashboard/knowledge-base", label: "Knowledge" },
   { href: "/dashboard/communication-profile", label: "Tone profile" },
-  { href: "/dashboard/kommo", label: "Kommo setup" }
 ];
 
 export function DashboardShell({ children }: { children: ReactNode }) {
@@ -22,8 +21,8 @@ export function DashboardShell({ children }: { children: ReactNode }) {
           <div className="brand-mark">P</div>
           <div>
             <p className="eyebrow">Pallet Pros Academy</p>
-            <h2>AI Appointment Setter</h2>
-            <p className="muted">Approval-first inbox, reply drafts, and guardrails for the Kommo flow.</p>
+            <h2>Approval Console</h2>
+            <p className="muted">Approval-first inbox, reply drafts, and guardrails for review workflows.</p>
           </div>
         </div>
 
@@ -72,7 +71,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
           </div>
 
           <div className="topbar-badges" aria-label="Workspace status">
-            <span className="chip chip-emerald">Kommo connected</span>
+            <span className="chip chip-emerald">Review only</span>
             <span className="chip chip-cyan">OpenAI structured draft</span>
             <span className="chip">Human review required</span>
           </div>
