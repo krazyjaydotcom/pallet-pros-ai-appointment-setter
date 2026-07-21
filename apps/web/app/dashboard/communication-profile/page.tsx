@@ -4,6 +4,8 @@ import { readUiState } from "@/src/lib/mock-store";
 
 export const dynamic = "force-dynamic";
 
+type SearchParams = Record<string, string | string[] | undefined>;
+
 function getKommoStatusMessage(status: string | string[] | undefined, detail: string | string[] | undefined) {
   const resolvedStatus = Array.isArray(status) ? status[0] : status;
   const resolvedDetail = Array.isArray(detail) ? detail[0] : detail;
@@ -37,9 +39,9 @@ function getKommoStatusMessage(status: string | string[] | undefined, detail: st
 }
 
 export default async function CommunicationProfilePage(props: {
-  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+  searchParams?: Promise<SearchParams>;
 }) {
-  const searchParams = await Promise.resolve(props.searchParams ?? {});
+  const searchParams: SearchParams = (await props.searchParams) ?? {};
   const state = await readUiState();
   const appBaseUrl = env.APP_BASE_URL?.trim() || "http://localhost:3000";
   const kommoOauthStartUrl = new URL("/api/kommo/oauth", appBaseUrl).toString();
