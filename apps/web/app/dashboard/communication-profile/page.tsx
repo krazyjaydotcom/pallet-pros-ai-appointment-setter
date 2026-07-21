@@ -1,13 +1,83 @@
 import { CommunicationProfileEditor } from "@/components/communication-profile-editor";
+import { env } from "@/src/lib/env";
 import { readUiState } from "@/src/lib/mock-store";
 
 export const dynamic = "force-dynamic";
 
-export default async function CommunicationProfilePage() {
+function getKommoStatusMessage(status: string | string[] | undefined, detail: string | string[] | undefined) {
+  const resolvedStatus = Array.isArray(status) ? status[0] : status;
+  const resolvedDetail = Array.isArray(detail) ? detail[0] : detail;
+
+  if (!resolvedStatus) {
+    return null;
+  }
+
+  const labelMap: Record<string, { title: string; tone: string }> = {
+    connected: { title: "Kommo connected successfully.", tone: "success" },
+    denied: { title: "Kommo access was denied.", tone: "warning" },
+    "missing-code": { title: "Kommo did not return an authorization code.", tone: "warning" },
+    "invalid-state": { title: "Kommo OAuth state did not match.", tone: "warning" },
+    error: { title: "Kommo connection failed.", tone: "warning" }
+  };
+
+  const label = labelMap[resolvedStatus] ?? { title: `Kommo status: ${resolvedStatus}`, tone: "warning" };
+
+  return (
+    <section className="panel" style={{ marginBottom: 24 }}>
+      <div className="panel-header">
+        <div>
+          <p className="eyebrow">Kommo setup</p>
+          <h2>{label.title}</h2>
+          {resolvedDetail ? <p className="muted">{resolvedDetail}</p> : null}
+        </div>
+        <span className={`status-pill ${label.tone}`.trim()}>{resolvedStatus}</span>
+      </div>
+    </section>
+  );
+}
+
+export default async function CommunicationProfilePage(props: {
+  searchParams?: Promise<Record<string, string | string[] | undefined>> | Record<string, string | string[] | undefined>;
+}) {
+  const searchParams = await Promise.resolve(props.searchParams ?? {});
   const state = await readUiState();
+  const appBaseUrl = env.APP_BASE_URL?.trim() || "http://localhost:3000";
+  const kommoOauthStartUrl = new URL("/api/kommo/oauth", appBaseUrl).toString();
+  const kommoRedirectUrl = new URL("/api/kommo/oauth/callback", appBaseUrl).toString();
+  const kommoWebhookUrl = new URL("/api/kommo/webhook", appBaseUrl).toString();
 
   return (
     <main className="page-stack">
+      {getKommoStatusMessage(searchParams.kommo, searchParams.detail)}
+
+      <section className="panel">
+        <div className="panel-header">
+          <div>
+            <p className="eyebrow">Kommo connection</p>
+            <h2>Use these URLs when you wire Kommo to the app.</h2>
+            <p className="muted">The start link opens Kommo authorization, the callback receives the code, and the webhook receives incoming message events.</p>
+          </div>
+          <a className="button" href={kommoOauthStartUrl}>
+            Connect Kommo
+          </a>
+        </div>
+
+        <div className="grid two">
+          <div className="callout">
+            <span className="muted">OAuth start</span>
+            <code style={{ display: "block", marginTop: 8, wordBreak: "break-all" }}>{kommoOauthStartUrl}</code>
+          </div>
+          <div className="callout">
+            <span className="muted">OAuth callback</span>
+            <code style={{ display: "block", marginTop: 8, wordBreak: "break-all" }}>{kommoRedirectUrl}</code>
+          </div>
+          <div className="callout" style={{ gridColumn: "1 / -1" }}>
+            <span className="muted">Webhook intake</span>
+            <code style={{ display: "block", marginTop: 8, wordBreak: "break-all" }}>{kommoWebhookUrl}</code>
+          </div>
+        </div>
+      </section>
+
       <section className="hero">
         <div className="hero-grid">
           <div className="hero-copy">
