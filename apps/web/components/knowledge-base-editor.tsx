@@ -54,8 +54,8 @@ export function KnowledgeBaseEditor({ entries }: { entries: UiKnowledgeEntry[] }
       <div className="panel-header">
         <div>
           <p className="eyebrow">Policy set</p>
-          <h2>Knowledge entries and their current publish state.</h2>
-          <p className="muted">A few entries are enough for the local working version; the store can be expanded later.</p>
+          <h2>Knowledge entries and their publish state.</h2>
+          <p className="muted">A small, editable library keeps the reply logic easy to tune without a redeploy.</p>
         </div>
         <span className="chip">Published {publishedCount}/{drafts.length}</span>
       </div>
@@ -65,36 +65,43 @@ export function KnowledgeBaseEditor({ entries }: { entries: UiKnowledgeEntry[] }
           <article key={entry.id} className="card compact">
             <div className="panel-header">
               <div>
-                <span className="pill">#{entry.id}</span>
+                <span className="pill">{entry.id}</span>
                 <h3 style={{ marginTop: 12 }}>{entry.title}</h3>
+                <p className="muted" style={{ marginTop: 8 }}>
+                  {entry.category} · Priority {entry.priority} · {entry.tags.length} tags
+                </p>
               </div>
-              <span className={`status-pill ${entry.status === "Published" ? "success" : entry.status === "Draft" ? "warning" : ""}`.trim()}>
-                {entry.status}
-              </span>
+              <div className="hero-actions">
+                <span
+                  className={`status-pill ${entry.status === "Published" ? "success" : entry.status === "Draft" ? "warning" : ""}`.trim()}
+                >
+                  {entry.status}
+                </span>
+                <span className="chip">#{index + 1}</span>
+              </div>
             </div>
 
-            <div className="field-grid two">
-              <label className="field">
-                <span>Title</span>
-                <input className="input" value={entry.title} onChange={(event) => updateDraft(index, { title: event.target.value })} />
-              </label>
-              <label className="field">
-                <span>Category</span>
-                <input className="input" value={entry.category} onChange={(event) => updateDraft(index, { category: event.target.value })} />
-              </label>
-            </div>
-
-            <label className="field">
-              <span>Content</span>
-              <textarea className="textarea" value={entry.content} onChange={(event) => updateDraft(index, { content: event.target.value })} />
-            </label>
-
-            <div className="field-grid two">
-              <label className="field">
-                <span>Retrieval summary</span>
-                <textarea className="textarea" value={entry.retrievalSummary} onChange={(event) => updateDraft(index, { retrievalSummary: event.target.value })} />
-              </label>
+            <div className="grid two">
               <div className="field-grid">
+                <label className="field">
+                  <span>Title</span>
+                  <input className="input" value={entry.title} onChange={(event) => updateDraft(index, { title: event.target.value })} />
+                </label>
+                <label className="field">
+                  <span>Category</span>
+                  <input className="input" value={entry.category} onChange={(event) => updateDraft(index, { category: event.target.value })} />
+                </label>
+                <label className="field">
+                  <span>Content</span>
+                  <textarea className="textarea" value={entry.content} onChange={(event) => updateDraft(index, { content: event.target.value })} />
+                </label>
+              </div>
+
+              <div className="field-grid">
+                <label className="field">
+                  <span>Retrieval summary</span>
+                  <textarea className="textarea" value={entry.retrievalSummary} onChange={(event) => updateDraft(index, { retrievalSummary: event.target.value })} />
+                </label>
                 <label className="field">
                   <span>Tags</span>
                   <input className="input" value={entry.tagsText} onChange={(event) => updateDraft(index, { tagsText: event.target.value })} />
