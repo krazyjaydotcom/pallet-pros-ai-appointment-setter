@@ -1,6 +1,7 @@
 import crypto from "crypto";
 import { Prisma } from "@pallet-pros/db";
 import { z } from "zod";
+import { resolveAppBaseUrl as resolveConfiguredAppBaseUrl } from "./app-url";
 import { ensureRuntimeSchema } from "./db-bootstrap";
 import { env } from "./env";
 import { getPrismaClient } from "./prisma-client";
@@ -72,7 +73,27 @@ function compactJson(input: unknown) {
 }
 
 function resolveAppBaseUrl(requestUrl?: string) {
-  return env.APP_BASE_URL?.trim() || (requestUrl ? new URL(requestUrl).origin : "http://localhost:3000");
+  if (env.APP_BASE_URL?.trim() || env.KOMMO_REDIRECT_URI?.trim()) {
+    return resolveConfiguredAppBaseUrl();
+  }
+
+  if (!requestUrl) {
+    return resolveConfiguredAppBaseUrl();
+  }
+
+  const requestOrigin = new URL(requestUrl).origin;
+
+  return resolveConfiguredAppBaseUrl({
+    get(name: string) {
+      if (name === "host") {
+        return new URL(requestOrigin).host;
+      }
+      if (name === "x-forwarded-proto") {
+        return new URL(requestOrigin).protocol.replace(":", "");
+      }
+      return null;
+    }
+  });
 }
 
 export function resolveKommoRedirectUri(requestUrl?: string) {
