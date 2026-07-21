@@ -37,7 +37,7 @@ function getKommoStatusMessage(status: string | string[] | undefined, detail: st
 }
 
 export default async function CommunicationProfilePage(props: {
-  searchParams?: Promise<Record<string, string | string[] | undefined>> | Record<string, string | string[] | undefined>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const searchParams = await Promise.resolve(props.searchParams ?? {});
   const state = await readUiState();
