@@ -1,5 +1,6 @@
+import { headers } from "next/headers";
 import { CommunicationProfileEditor } from "@/components/communication-profile-editor";
-import { env } from "@/src/lib/env";
+import { resolveAppBaseUrl } from "@/src/lib/app-url";
 import { readUiState } from "@/src/lib/mock-store";
 
 export const dynamic = "force-dynamic";
@@ -43,7 +44,7 @@ export default async function CommunicationProfilePage(props: {
 }) {
   const searchParams: SearchParams = (await props.searchParams) ?? {};
   const state = await readUiState();
-  const appBaseUrl = env.APP_BASE_URL?.trim() || "http://localhost:3000";
+  const appBaseUrl = resolveAppBaseUrl(await headers());
   const kommoOauthStartUrl = new URL("/api/kommo/oauth", appBaseUrl).toString();
   const kommoRedirectUrl = new URL("/api/kommo/oauth/callback", appBaseUrl).toString();
   const kommoWebhookUrl = new URL("/api/kommo/webhook", appBaseUrl).toString();
