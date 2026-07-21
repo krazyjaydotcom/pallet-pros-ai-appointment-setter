@@ -18,6 +18,7 @@ export default async function DashboardPage() {
               Review AI proposals, edit replies, and keep automatic sending locked down with a cleaner, more familiar control surface.
             </p>
             <div className="hero-actions">
+              <Link className="button" href="/dashboard/setup">Open setup</Link>
               <Link className="button secondary" href="/dashboard/knowledge-base">Knowledge base</Link>
               <Link className="button secondary" href="/dashboard/communication-profile">Communication profile</Link>
               <Link className="button" href="/dashboard/playground">Playground</Link>

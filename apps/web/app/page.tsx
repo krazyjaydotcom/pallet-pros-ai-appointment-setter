@@ -24,6 +24,7 @@ export default async function HomePage() {
             </p>
             <div className="hero-actions">
               <Link className="button" href="/dashboard">Open dashboard</Link>
+              <Link className="button secondary" href="/dashboard/setup">Open setup</Link>
               <Link className="button secondary" href="/dashboard/playground">Try the playground</Link>
             </div>
           </div>

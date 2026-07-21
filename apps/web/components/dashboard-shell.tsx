@@ -6,6 +6,7 @@ import type { ReactNode } from "react";
 
 const navigation = [
   { href: "/dashboard", label: "Overview" },
+  { href: "/dashboard/setup", label: "Setup" },
   { href: "/dashboard/playground", label: "Playground" },
   { href: "/dashboard/knowledge-base", label: "Knowledge" },
   { href: "/dashboard/communication-profile", label: "Tone profile" },
